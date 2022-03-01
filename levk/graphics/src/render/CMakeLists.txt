@@ -1,5 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
   context.cpp
+  descriptor_helper.cpp
   descriptor_set.cpp
   pipeline_factory.cpp
   pipeline_spec.cpp

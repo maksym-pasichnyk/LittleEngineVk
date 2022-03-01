@@ -38,6 +38,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   include/levk/graphics/render/buffering.hpp
   include/levk/graphics/render/camera.hpp
   include/levk/graphics/render/context.hpp
+  include/levk/graphics/render/descriptor_helper.hpp
   include/levk/graphics/render/descriptor_set.hpp
   include/levk/graphics/render/pipeline_factory.hpp
   include/levk/graphics/render/pipeline_flags.hpp

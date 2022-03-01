@@ -15,7 +15,6 @@
 #include <levk/gameplay/gui/widget.hpp>
 
 #include <levk/core/utils/enumerate.hpp>
-#include <levk/engine/render/descriptor_helper.hpp>
 #include <levk/gameplay/gui/widgets/dropdown.hpp>
 
 #include <ktl/async/kasync.hpp>
@@ -145,7 +144,7 @@ class Renderer : public ListRenderer {
 	}
 
   private:
-	void writeSets(DescriptorMap map, graphics::DrawList const& list) override {
+	void writeSets(graphics::DescriptorMap map, graphics::DrawList const& list) override {
 		auto set0 = map.nextSet(list.m_bindings, 0);
 		set0.update(0, *m_mats);
 		set0.update(1, *m_lights);
@@ -157,7 +156,7 @@ class Renderer : public ListRenderer {
 				auto set2 = map.nextSet(obj.bindings, 2);
 				set2.update(0, primitive.textures[MatTexType::eDiffuse]);
 				set2.update(1, primitive.textures[MatTexType::eAlpha]);
-				set2.update(2, primitive.textures[MatTexType::eSpecular], TextureFallback::eBlack);
+				set2.update(2, primitive.textures[MatTexType::eSpecular]);
 				map.nextSet(obj.bindings, 3).update(0, smat);
 			}
 		}

@@ -1,7 +1,7 @@
 #pragma once
-#include <levk/engine/render/descriptor_helper.hpp>
 #include <levk/engine/render/pipeline.hpp>
 #include <levk/engine/render/render_list.hpp>
+#include <levk/graphics/render/descriptor_helper.hpp>
 #include <levk/graphics/render/pipeline_factory.hpp>
 #include <levk/graphics/render/renderer.hpp>
 
@@ -10,6 +10,8 @@ class registry;
 }
 
 namespace le {
+class AssetStore;
+
 class ListRenderer {
   public:
 	using PipelineFactory = graphics::PipelineFactory;
@@ -24,10 +26,10 @@ class ListRenderer {
 	void render(RenderPass& out_rp, AssetStore const& store, RenderMap map);
 
   protected:
-	virtual void writeSets(DescriptorMap map, graphics::DrawList const& list) = 0;
+	virtual void writeSets(graphics::DescriptorMap map, graphics::DrawList const& list) = 0;
 
 	virtual void fill(RenderMap& out_map, AssetStore const& store, dens::registry const& registry) const;
-	virtual void draw(DescriptorBinder bind, graphics::DrawList const& list, graphics::CommandBuffer const& cb) const;
+	virtual void draw(graphics::DescriptorBinder bind, graphics::DrawList const& list, graphics::CommandBuffer const& cb) const;
 
 	vk::Rect2D m_scissor{};
 };

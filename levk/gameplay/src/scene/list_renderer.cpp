@@ -21,6 +21,10 @@ constexpr EnumArray<Topology, vk::PrimitiveTopology> topologies = {
 	vk::PrimitiveTopology::ePointList,	  vk::PrimitiveTopology::eLineList,		vk::PrimitiveTopology::eLineStrip,
 	vk::PrimitiveTopology::eTriangleList, vk::PrimitiveTopology::eTriangleList, vk::PrimitiveTopology::eTriangleFan,
 };
+
+graphics::DescriptorFallback makeDescriptorTextures(AssetStore const& store) {
+	return {store.find<graphics::Texture>("textures/white"), store.find<graphics::Texture>("cubemaps/blank")};
+}
 } // namespace
 
 graphics::PipelineSpec ListRenderer::pipelineSpec(RenderPipeline const& rp) {
@@ -38,16 +42,13 @@ void ListRenderer::fill(RenderMap& out_map, AssetStore const& store, dens::regis
 	DebugDrawListGen{}(out_map, store, registry);
 }
 
-void ListRenderer::draw(DescriptorBinder binder, graphics::DrawList const& list, graphics::CommandBuffer const& cb) const {
-	// binder.bindNext(0);
+void ListRenderer::draw(graphics::DescriptorBinder binder, graphics::DrawList const& list, graphics::CommandBuffer const& cb) const {
 	binder.bind(list.m_bindings);
 	for (auto const& drawObj : list) {
-		// binder.bindNext(1);
 		binder.bind(drawObj.bindings);
 		cb.setScissor(drawObj.scissor ? *drawObj.scissor : m_scissor);
 		for (auto const& obj : drawObj.objs) {
 			auto const& primitive = obj.primitive;
-			// binder.bindNext(2, 3);
 			binder.bind(obj.bindings);
 			primitive.primitive->draw(cb);
 		}
@@ -64,7 +65,7 @@ void ListRenderer::render(RenderPass& out_rp, AssetStore const& store, RenderMap
 			drawLists.push_back(RenderList{pipe, std::move(list), rpipe.layer.order});
 		}
 	}
-	auto const cache = DescriptorHelper::Cache::make(&store);
+	auto const textures = makeDescriptorTextures(store);
 	std::unordered_set<graphics::ShaderInput*> pipes;
 	auto const& cb = out_rp.commandBuffers().front();
 	m_scissor = out_rp.scissor();
@@ -74,8 +75,8 @@ void ListRenderer::render(RenderPass& out_rp, AssetStore const& store, RenderMap
 		EXPECT(list.pipeline.valid());
 		cb.m_cb.bindPipeline(vk::PipelineBindPoint::eGraphics, list.pipeline.pipeline);
 		pipes.insert(list.pipeline.shaderInput);
-		writeSets(DescriptorMap(&cache, list.pipeline.shaderInput), list.drawList);
-		draw(DescriptorBinder(list.pipeline.layout, list.pipeline.shaderInput, cb), list.drawList, cb);
+		writeSets(graphics::DescriptorMap(textures, list.pipeline.shaderInput), list.drawList);
+		draw(graphics::DescriptorBinder(list.pipeline.layout, list.pipeline.shaderInput, cb), list.drawList, cb);
 	}
 	for (auto pipe : pipes) { pipe->swap(); }
 }
