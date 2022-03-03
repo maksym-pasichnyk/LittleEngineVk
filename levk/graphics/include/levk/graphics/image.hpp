@@ -6,8 +6,6 @@ class Image {
   public:
 	struct CreateInfo;
 
-	static constexpr auto allocation_type_v = Memory::Type::eImage;
-
 	static constexpr vk::Format srgb_v = vk::Format::eR8G8B8A8Srgb;
 	static constexpr vk::Format linear_v = vk::Format::eR8G8B8A8Unorm;
 
@@ -48,7 +46,7 @@ class Image {
 		u32 mipCount = 1U;
 		BlitFlags blitFlags;
 	};
-	Memory::Deferred m_image;
+	Defer<Memory::Resource, Memory::Deleter> m_image;
 	Defer<vk::ImageView> m_view;
 	Data m_data;
 	not_null<Memory*> m_memory;

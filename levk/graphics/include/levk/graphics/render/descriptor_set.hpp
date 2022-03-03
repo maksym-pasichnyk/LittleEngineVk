@@ -56,13 +56,13 @@ class DescriptorSet {
 	void update(u32 binding, vk::DescriptorType type, Span<T const> writes);
 
 	struct Binding {
+		std::optional<Buffer> buffer{};
 		vk::DescriptorType type{};
 		Texture::Type texType{};
 		u32 count = 1;
 	};
 	struct Set {
 		Binding bindings[max_bindings_v];
-		std::optional<Buffer> buffer;
 		vk::DescriptorSet set;
 	};
 
@@ -125,12 +125,12 @@ constexpr vk::BufferUsageFlags DescriptorSet::usage(vk::DescriptorType type) noe
 template <typename T>
 void DescriptorSet::writeUpdate(T const& payload, u32 binding) {
 	auto [s, b] = setBind(binding);
-	if (!s.buffer) {
-		s.buffer.emplace(m_vram->makeBO(payload, usage(b.type)));
+	if (!b.buffer || b.buffer->writeSize() < sizeof(T)) {
+		b.buffer = m_vram->makeBO(payload, usage(b.type));
 	} else {
-		s.buffer->writeT(payload);
+		b.buffer->writeT(payload);
 	}
-	Buf const buf{s.buffer->buffer(), sizeof(T)};
+	Buf const buf{b.buffer->buffer(), sizeof(T)};
 	updateBuffersImpl(binding, buf, b.type);
 }
 

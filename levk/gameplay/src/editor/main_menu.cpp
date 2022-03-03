@@ -43,10 +43,6 @@ void Panes::showStats() const {
 			auto t = Text(CStr<32>("FPS: {}", s.frame.rate));
 			t = Text(CStr<32>("Frame #: {}", s.frame.count));
 			t = Text(CStr<32>("Uptime: {}", time::format(s.upTime).data()));
-			auto const [bsize, bunit] = utils::friendlySize(s.gfx.bytes.buffers);
-			auto const [isize, iunit] = utils::friendlySize(s.gfx.bytes.images);
-			t = Text(CStr<32>("Buffers: {.1f}{}", bsize, bunit.data()));
-			t = Text(CStr<32>("Images: {.1f}{}", isize, iunit.data()));
 			t = Text(CStr<32>("Draw calls: {}", s.gfx.drawCalls));
 			t = Text(CStr<32>("Triangles: {}", s.gfx.triCount));
 			t = Text(CStr<32>("Window: {}x{}", s.gfx.extents.window.x, s.gfx.extents.window.y));

@@ -13,7 +13,7 @@ Buffer::Buffer(not_null<Memory*> memory, CreateInfo const& info) : m_memory(memo
 	u32 const family = device.queues().primary().family();
 	bufferInfo.pQueueFamilyIndices = &family;
 	if (auto buf = m_memory->makeBuffer(info, bufferInfo)) {
-		m_buffer = {*buf, m_memory->m_device, m_memory};
+		m_buffer = {*buf, m_memory->m_device};
 		m_data.usage = info.usage;
 		m_data.type = info.vmaUsage == VMA_MEMORY_USAGE_GPU_ONLY ? Buffer::Type::eGpuOnly : Buffer::Type::eCpuToGpu;
 	} else {

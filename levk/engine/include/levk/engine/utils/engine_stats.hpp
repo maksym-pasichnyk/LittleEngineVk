@@ -12,10 +12,6 @@ struct EngineStats {
 	};
 	struct Gfx {
 		struct {
-			u64 buffers;
-			u64 images;
-		} bytes;
-		struct {
 			glm::uvec2 swapchain;
 			glm::uvec2 window;
 			glm::uvec2 renderer;

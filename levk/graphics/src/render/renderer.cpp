@@ -54,7 +54,7 @@ Image& ImageCache::refresh(Extent2D extent, vk::Format format) {
 Renderer::Cmd Renderer::Cmd::make(not_null<Device*> device, bool secondary) {
 	Cmd ret;
 	auto const level = secondary ? vk::CommandBufferLevel::eSecondary : vk::CommandBufferLevel::ePrimary;
-	ret.pool = ret.pool.make(device->queues().graphics().makeCommandPool(device->device(), vk::CommandPoolCreateFlagBits::eTransient), device);
+	ret.pool = {device->queues().graphics().makeCommandPool(device->device(), vk::CommandPoolCreateFlagBits::eTransient), device};
 	ret.cb = CommandBuffer(*device, ret.pool, level);
 	return ret;
 }
@@ -115,7 +115,7 @@ Defer<vk::RenderPass> Renderer::makeRenderPass(not_null<Device*> device, Attachm
 	createInfo.pSubpasses = &subpass;
 	createInfo.dependencyCount = (u32)deps.size();
 	createInfo.pDependencies = deps.data();
-	return Defer<vk::RenderPass>::make(device->device().createRenderPass(createInfo), device);
+	return Defer<vk::RenderPass>(device->device().createRenderPass(createInfo), device);
 }
 
 Defer<vk::RenderPass> Renderer::makeMainRenderPass(not_null<Device*> device, vk::Format colour, vk::Format depth, Span<vk::SubpassDependency const> deps) {
@@ -138,6 +138,7 @@ Renderer::Renderer(CreateInfo const& info) : m_depthImage(info.vram), m_colourIm
 		Cmds cmds;
 		for (u8 j = 0; j < secondaryCmds; ++j) { cmds.push_back(Cmd::make(m_vram->m_device, true)); }
 		m_secondaryCmds.push(std::move(cmds));
+		m_framebuffers.push({{}, m_vram->m_device});
 	}
 	m_surfaceFormat = info.surfaceFormat;
 	m_blitFlags = info.surfaceBlitFlags;
@@ -158,7 +159,7 @@ Defer<vk::RenderPass> Renderer::makeRenderPass(vk::Format colour, std::optional<
 	return makeRenderPass(m_vram->m_device, ac, ad, deps);
 }
 
-RenderInfo Renderer::mainPassInfo(RenderTarget const& colour, RenderTarget const& depth, RenderBegin const& rb) const {
+RenderInfo Renderer::mainPassInfo(RenderTarget const& colour, RenderTarget const& depth, RenderBegin const& rb) {
 	RenderInfo ri;
 	ri.begin = rb;
 	ri.primary = m_primaryCmd.get().cb;
@@ -166,6 +167,7 @@ RenderInfo Renderer::mainPassInfo(RenderTarget const& colour, RenderTarget const
 	ri.renderPass = m_singleRenderPass;
 	ri.framebuffer.colour = colour;
 	ri.framebuffer.depth = depth;
+	ri.out_framebuffer = &m_framebuffers.get().get();
 	return ri;
 }
 
@@ -220,5 +222,6 @@ bool Renderer::renderScale(f32 rs) noexcept {
 void Renderer::next() {
 	m_primaryCmd.next();
 	m_secondaryCmds.next();
+	m_framebuffers.next();
 }
 } // namespace le::graphics

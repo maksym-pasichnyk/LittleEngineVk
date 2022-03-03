@@ -41,7 +41,6 @@ Memory::Memory(not_null<Device*> device) : m_device(device) {
 	vkFunc.vkGetPhysicalDeviceMemoryProperties2KHR = dl.vkGetPhysicalDeviceMemoryProperties2KHR;
 	allocatorInfo.pVulkanFunctions = &vkFunc;
 	vmaCreateAllocator(&allocatorInfo, &m_allocator);
-	for (auto& count : m_allocations.arr) { count.store(0); }
 	logI(LC_LibUser, "[{}] Memory constructed", g_name);
 }
 
@@ -159,7 +158,6 @@ std::optional<Memory::Resource> Memory::makeBuffer(AllocInfo const& ai, vk::Buff
 	ret.size = bci.size;
 	ret.qcaps = ai.qcaps;
 	ret.mode = bci.sharingMode;
-	m_allocations[Type::eBuffer].fetch_add(ret.size);
 	return ret;
 }
 
@@ -183,13 +181,8 @@ std::optional<Memory::Resource> Memory::makeImage(AllocInfo const& ai, vk::Image
 	ret.size = requirements.size;
 	ret.mode = ici.sharingMode;
 	ret.qcaps = ai.qcaps;
-	m_allocations[Type::eImage].fetch_add(ret.size);
 	m_device->m_layouts.force(image, ici.initialLayout);
 	return ret;
-}
-
-void Memory::defer(Resource const& resource) const {
-	m_device->defer([resource, this]() { Deleter{}(this, resource); });
 }
 
 void* Memory::map(Resource& out_resource) const {
@@ -204,17 +197,13 @@ void Memory::unmap(Resource& out_resource) const {
 	}
 }
 
-void Memory::Deleter::operator()(not_null<Memory const*> memory, Resource const& resource) const {
+void Memory::Deleter::operator()(Device& device, Resource const& resource) const {
 	if (resource.data) { vmaUnmapMemory(resource.allocator, resource.handle); }
 	resource.resource.visit(ktl::koverloaded{
-		[&](vk::Buffer buffer) {
-			vmaDestroyBuffer(resource.allocator, static_cast<VkBuffer>(buffer), resource.handle);
-			memory->m_allocations[Type::eBuffer].fetch_sub(resource.size);
-		},
+		[&](vk::Buffer buffer) { vmaDestroyBuffer(resource.allocator, static_cast<VkBuffer>(buffer), resource.handle); },
 		[&](vk::Image image) {
 			vmaDestroyImage(resource.allocator, static_cast<VkImage>(image), resource.handle);
-			memory->m_allocations[Type::eImage].fetch_sub(resource.size);
-			memory->m_device->m_layouts.force(image, vk::ImageLayout::eUndefined);
+			device.m_layouts.force(image, vk::ImageLayout::eUndefined);
 		},
 	});
 }

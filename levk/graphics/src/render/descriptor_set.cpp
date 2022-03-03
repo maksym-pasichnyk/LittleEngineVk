@@ -15,7 +15,7 @@ DescriptorSet::DescriptorSet(not_null<VRAM*> vram, CreateInfo const& info) : m_v
 			Set set;
 			for (auto const& [data, idx] : le::utils::enumerate(m_bindingData)) {
 				if (data.layoutBinding.descriptorType != vk::DescriptorType()) {
-					set.bindings[idx] = {data.layoutBinding.descriptorType, data.textureType, data.layoutBinding.descriptorCount};
+					set.bindings[idx] = {{}, data.layoutBinding.descriptorType, data.textureType, data.layoutBinding.descriptorCount};
 				}
 			}
 			set.set = dset;
@@ -105,7 +105,7 @@ void DescriptorPool::swap() {
 void DescriptorPool::makeSets() const {
 	EXPECT(!unassigned() && m_hasActiveBinding);
 	auto pool = m_vram->m_device->makeDescriptorPool(m_poolSizes, m_maxSets);
-	m_pools.push_back(Defer<vk::DescriptorPool>::make(pool, m_vram->m_device));
+	m_pools.push_back(Defer<vk::DescriptorPool>(pool, m_vram->m_device));
 	std::vector<vk::DescriptorSetLayout> layouts(m_info.setsPerPool * std::size_t(m_info.buffering), m_info.layout);
 	auto const count = m_info.setsPerPool * u32(m_info.buffering);
 	auto sets = m_vram->m_device->allocateDescriptorSets(m_pools.back(), layouts, count);

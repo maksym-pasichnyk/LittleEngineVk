@@ -69,9 +69,9 @@ class RenderContext {
 struct RenderContext::Sync {
 	static Sync make(not_null<Device*> device) {
 		Sync ret;
-		ret.draw = ret.draw.make(device->makeSemaphore(), device);
-		ret.present = ret.present.make(device->makeSemaphore(), device);
-		ret.drawn = ret.drawn.make(device->makeFence(true), device);
+		ret.draw = {device->makeSemaphore(), device};
+		ret.present = {device->makeSemaphore(), device};
+		ret.drawn = {device->makeFence(true), device};
 		return ret;
 	}
 

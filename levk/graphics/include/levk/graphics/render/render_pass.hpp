@@ -23,6 +23,7 @@ struct RenderInfo {
 	Framebuffer framebuffer;
 	RenderBegin begin;
 	vk::RenderPass renderPass;
+	vk::Framebuffer* out_framebuffer{};
 };
 
 class RenderPass {
@@ -45,7 +46,7 @@ class RenderPass {
 	void beginPass();
 
 	RenderInfo m_info;
-	Defer<vk::Framebuffer> m_framebuffer;
+	not_null<vk::Framebuffer*> m_framebuffer;
 	not_null<Device*> m_device;
 	not_null<PipelineFactory*> m_factory;
 };

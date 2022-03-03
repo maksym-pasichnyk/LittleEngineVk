@@ -41,7 +41,7 @@ class DearImGui final {
 
   private:
 	struct Del {
-		void operator()() const;
+		void operator()(graphics::Device&) const;
 	};
 
 	bool next(State from, State to);
@@ -49,7 +49,7 @@ class DearImGui final {
 #if defined(LEVK_USE_IMGUI)
 	graphics::Device* m_device = {};
 	graphics::Defer<vk::DescriptorPool> m_pool;
-	graphics::Defer<void, void, Del> m_del;
+	graphics::Defer<void, Del> m_del;
 #endif
 	State m_state = State::eEnd;
 };

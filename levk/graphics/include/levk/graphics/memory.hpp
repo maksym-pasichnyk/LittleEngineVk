@@ -19,16 +19,12 @@ enum class BlitFilter { eLinear, eNearest };
 
 class Memory : public Pinned {
   public:
-	enum class Type { eBuffer, eImage };
-
 	template <typename T>
 	using vAP = vk::ArrayProxy<T const> const&;
 
 	struct AllocInfo;
 	struct Resource;
 	struct Deleter;
-
-	using Deferred = Defer<Resource, Memory, Deleter>;
 
 	struct ImgMeta {
 		LayerMip layerMip;
@@ -53,17 +49,13 @@ class Memory : public Pinned {
 
 	std::optional<Resource> makeBuffer(AllocInfo const& ai, vk::BufferCreateInfo const& bci) const;
 	std::optional<Resource> makeImage(AllocInfo const& ai, vk::ImageCreateInfo const& ici) const;
-	void defer(Resource const& resource) const;
 	void* map(Resource& out_resource) const;
 	void unmap(Resource& out_resource) const;
-
-	u64 bytes(Type type) const noexcept { return m_allocations[type].load(); }
 
 	not_null<Device*> m_device;
 
   protected:
 	VmaAllocator m_allocator;
-	mutable EnumArray<Type, std::atomic<u64>, 2> m_allocations;
 };
 
 struct Memory::AllocInfo {
@@ -91,6 +83,6 @@ struct Memory::Resource {
 };
 
 struct Memory::Deleter {
-	void operator()(not_null<Memory const*> memory, Resource const& resource) const;
+	void operator()(Device& device, Resource const& resource) const;
 };
 } // namespace le::graphics

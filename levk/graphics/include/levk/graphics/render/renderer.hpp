@@ -64,7 +64,7 @@ class Renderer {
 	Renderer(CreateInfo const& info);
 	virtual ~Renderer() = default;
 
-	RenderInfo mainPassInfo(RenderTarget const& colour, RenderTarget const& depth, RenderBegin const& rb) const;
+	RenderInfo mainPassInfo(RenderTarget const& colour, RenderTarget const& depth, RenderBegin const& rb);
 	RenderPass beginMainPass(PipelineFactory& pf, RenderTarget const& acquired, RenderBegin const& rb);
 	virtual vk::CommandBuffer endMainPass(RenderPass& out_rp);
 
@@ -101,6 +101,7 @@ class Renderer {
 
 	TRotator<Cmd> m_primaryCmd;
 	TRotator<Cmds> m_secondaryCmds;
+	TRotator<Defer<vk::Framebuffer>> m_framebuffers;
 	Defer<vk::RenderPass> m_singleRenderPass;
 	Surface::Format m_surfaceFormat;
 	TPair<f32> m_scaleLimits = {0.25f, 4.0f};

@@ -331,8 +331,6 @@ Engine::Signal Engine::Service::onRendererChanged() const { return m_impl->deleg
 
 void Engine::Service::updateStats() const {
 	m_impl->stats.update();
-	m_impl->stats.stats.gfx.bytes.buffers = m_impl->gfx->vram->bytes(graphics::Memory::Type::eBuffer);
-	m_impl->stats.stats.gfx.bytes.images = m_impl->gfx->vram->bytes(graphics::Memory::Type::eImage);
 	m_impl->stats.stats.gfx.drawCalls = graphics::CommandBuffer::s_drawCalls.load();
 	m_impl->stats.stats.gfx.triCount = graphics::MeshPrimitive::s_trisDrawn.load();
 	m_impl->stats.stats.gfx.extents.window = m_impl->win->windowSize();

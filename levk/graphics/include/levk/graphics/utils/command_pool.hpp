@@ -1,6 +1,5 @@
 #pragma once
 #include <levk/graphics/command_buffer.hpp>
-#include <levk/graphics/utils/defer.hpp>
 
 namespace le::graphics {
 class FencePool {
@@ -10,10 +9,10 @@ class FencePool {
 	vk::Fence next();
 
   private:
-	Defer<vk::Fence> makeFence() const { return Defer<vk::Fence>::make(m_device->makeFence(true), m_device); }
+	vk::UniqueFence makeFence() const;
 
-	std::vector<Defer<vk::Fence>> m_free;
-	std::vector<Defer<vk::Fence>> m_busy;
+	std::vector<vk::UniqueFence> m_idle;
+	std::vector<vk::UniqueFence> m_busy;
 	not_null<Device*> m_device;
 };
 
@@ -34,7 +33,7 @@ class CommandPool {
 
 	FencePool m_fencePool;
 	std::vector<Cmd> m_cbs;
-	Defer<vk::CommandPool> m_pool;
+	vk::UniqueCommandPool m_pool;
 	not_null<Device*> m_device;
 	QType m_qtype{};
 	u32 m_batch;

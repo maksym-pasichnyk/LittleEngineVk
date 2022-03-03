@@ -127,7 +127,7 @@ bool DearImGui::init(MU RenderContext& context, MU Window const& window, MU std:
 	ImGui_ImplGlfw_InitForVulkan(glfwPtr(window), true);
 	ImGui_ImplVulkan_InitInfo initInfo = {};
 	auto const& queue = m_device->queues().graphics();
-	auto descPool = m_pool.make(makePool(*m_device, (u32)descriptorCount), m_device);
+	auto descPool = Defer<vk::DescriptorPool>(makePool(*m_device, (u32)descriptorCount), m_device);
 	initInfo.Instance = m_device->instance();
 	initInfo.Device = m_device->device();
 	initInfo.PhysicalDevice = m_device->physicalDevice().device;
@@ -143,7 +143,7 @@ bool DearImGui::init(MU RenderContext& context, MU Window const& window, MU std:
 	}
 	auto cmd = graphics::BlockingCommand(&context.vram());
 	ImGui_ImplVulkan_CreateFontsTexture(cmd.cb().m_cb);
-	m_del = m_del.make(m_device);
+	m_del = m_device;
 	m_pool = std::move(descPool);
 	logD(LC_LibUser, "[DearImGui] constructed");
 	return true;
@@ -152,7 +152,7 @@ bool DearImGui::init(MU RenderContext& context, MU Window const& window, MU std:
 #endif
 }
 
-void DearImGui::Del::operator()() const {
+void DearImGui::Del::operator()(Device&) const {
 #if defined(LEVK_USE_IMGUI)
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

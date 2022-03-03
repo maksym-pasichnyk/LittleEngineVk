@@ -24,7 +24,7 @@ class Device final : public Pinned {
 
 	enum class QSelect { eOptimal, eSingleFamily, eSingleQueue };
 	static constexpr std::string_view requiredExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME};
-	static constexpr stdch::nanoseconds fenceWait = 1s;
+	static constexpr stdch::nanoseconds fenceWait = 5s;
 
 	struct CreateInfo;
 
@@ -66,10 +66,8 @@ class Device final : public Pinned {
 	bool setDebugUtilsName(vk::DebugUtilsObjectNameInfoEXT const& info) const;
 	bool setDebugUtilsName(u64 handle, vk::ObjectType type, std::string_view name) const;
 
-	template <typename T, typename... Args>
-	T make(Args&&... args);
-	template <typename T, typename... Ts>
-	void destroy(T& out_t, Ts&... out_ts);
+	template <typename... T>
+	void destroy(T const&... t);
 	void defer(DeferQueue::Callback&& callback, Buffering defer = DeferQueue::defaultDefer);
 
 	void decrementDeferred();
@@ -140,39 +138,11 @@ constexpr vk::BufferUsageFlagBits Device::bufferUsage(vk::DescriptorType type) n
 	}
 }
 
-template <typename T, typename... Args>
-T Device::make(Args&&... args) {
-	if constexpr (std::is_same_v<T, vk::Semaphore>) {
-		return makeSemaphore(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::Fence>) {
-		return makeFence(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::ImageView>) {
-		return makeImageView(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::PipelineLayout>) {
-		return makePipelineLayout(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::DescriptorSetLayout>) {
-		return makeDescriptorSetLayout(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::DescriptorPool>) {
-		return makeDescriptorPool(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::RenderPass>) {
-		return makeRenderPass(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::Framebuffer>) {
-		return makeFramebuffer(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::PipelineCache>) {
-		return makePipelineCache(std::forward<Args>(args)...);
-	} else if constexpr (std::is_same_v<T, vk::Sampler>) {
-		return makeSampler(std::forward<Args>(args)...);
-	} else {
-		static_assert(false_v<T>, "Invalid type");
-	}
-}
-
-template <typename T, typename... Ts>
-void Device::destroy(T& out_t, Ts&... out_ts) {
-	if (!default_v(out_t)) {
-		m_device->destroy(out_t);
-		out_t = T();
-	}
-	if constexpr (sizeof...(Ts) > 0) { destroy(out_ts...); }
+template <typename... T>
+void Device::destroy(T const&... t) {
+	auto d = [](vk::Device device, auto const& a) {
+		if (a) { device.destroy(a); }
+	};
+	(d(*m_device, t), ...);
 }
 } // namespace le::graphics

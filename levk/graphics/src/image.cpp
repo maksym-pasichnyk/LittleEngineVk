@@ -90,9 +90,9 @@ Image::Image(not_null<Memory*> memory, CreateInfo const& info) : m_memory(memory
 		m_data.tiling = imageInfo.tiling;
 		m_data.layerCount = imageInfo.arrayLayers;
 		m_data.blitFlags = imageInfo.tiling == vk::ImageTiling::eLinear ? blitCaps.linear : blitCaps.optimal;
-		m_image = {*img, m_memory->m_device, m_memory};
+		m_image = {*img, m_memory->m_device};
 		if (info.view.aspects != vk::ImageAspectFlags() && info.view.format != vk::Format()) {
-			m_view = m_view.make(d.makeImageView(image(), info.view.format, info.view.aspects, info.view.type, imageInfo.mipLevels), &d);
+			m_view = {d.makeImageView(image(), info.view.format, info.view.aspects, info.view.type, imageInfo.mipLevels), &d};
 			m_data.viewType = info.view.type;
 		}
 	} else {

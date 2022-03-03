@@ -6,31 +6,33 @@ namespace le::graphics {
 static constexpr vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
 FencePool::FencePool(not_null<Device*> device, std::size_t count) : m_device(device) {
-	m_free.reserve(count);
-	for (std::size_t i = 0; i < count; ++i) { m_free.push_back(makeFence()); }
+	m_idle.reserve(count);
+	for (std::size_t i = 0; i < count; ++i) { m_idle.push_back(makeFence()); }
 }
 
 vk::Fence FencePool::next() {
-	std::erase_if(m_busy, [this](Defer<vk::Fence>& f) {
-		if (!m_device->isBusy(f)) {
-			m_free.push_back(std::move(f));
+	std::erase_if(m_busy, [this](vk::UniqueFence& f) {
+		if (!m_device->isBusy(*f)) {
+			m_idle.push_back(std::move(f));
 			return true;
 		}
 		return false;
 	});
-	if (m_free.empty()) { m_free.push_back(makeFence()); }
-	auto ret = std::move(m_free.back());
-	m_free.pop_back();
-	m_device->resetFence(ret, false);
+	if (m_idle.empty()) { m_idle.push_back(makeFence()); }
+	auto ret = std::move(m_idle.back());
+	m_idle.pop_back();
+	m_device->resetFence(*ret, false);
 	m_busy.push_back(std::move(ret));
-	return m_busy.back();
+	return *m_busy.back();
 }
+
+vk::UniqueFence FencePool::makeFence() const { return m_device->device().createFenceUnique({vk::FenceCreateFlagBits::eSignaled}); }
 
 CommandPool::CommandPool(not_null<Device*> device, QType qtype, std::size_t batch)
 	: m_fencePool(device, 0U), m_device(device), m_qtype(qtype), m_batch((u32)batch) {
 	EXPECT(qtype == QType::eGraphics || m_device->queues().hasCompute());
 	auto const& queue = qtype == QType::eCompute ? *m_device->queues().compute() : m_device->queues().graphics();
-	m_pool = m_pool.make(queue.makeCommandPool(m_device->device(), pool_flags_v), device);
+	m_pool = vk::UniqueCommandPool(queue.makeCommandPool(m_device->device(), pool_flags_v), device->device());
 }
 
 CommandBuffer CommandPool::acquire() {
@@ -43,7 +45,7 @@ CommandBuffer CommandPool::acquire() {
 		}
 	}
 	if (!cmd.cb) {
-		auto const info = vk::CommandBufferAllocateInfo(m_pool, vk::CommandBufferLevel::ePrimary, m_batch);
+		auto const info = vk::CommandBufferAllocateInfo(*m_pool, vk::CommandBufferLevel::ePrimary, m_batch);
 		auto cbs = m_device->device().allocateCommandBuffers(info);
 		m_cbs.reserve(m_cbs.size() + cbs.size());
 		for (auto const cb : cbs) { m_cbs.push_back(Cmd{cb, {}}); }

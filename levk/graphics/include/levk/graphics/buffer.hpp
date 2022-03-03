@@ -8,8 +8,6 @@ class Buffer {
 	enum class Type { eCpuToGpu, eGpuOnly };
 	struct CreateInfo;
 
-	static constexpr auto allocation_type_v = Memory::Type::eBuffer;
-
 	Buffer(not_null<Memory*> memory, CreateInfo const& info);
 
 	vk::Buffer buffer() const noexcept { return m_buffer.get().resource.get<vk::Buffer>(); }
@@ -31,7 +29,7 @@ class Buffer {
 		vk::BufferUsageFlags usage;
 		Type type{};
 	};
-	Memory::Deferred m_buffer;
+	Defer<Memory::Resource, Memory::Deleter> m_buffer;
 	Data m_data;
 	not_null<Memory*> m_memory;
 
