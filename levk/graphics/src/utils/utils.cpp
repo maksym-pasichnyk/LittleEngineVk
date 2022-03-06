@@ -430,7 +430,7 @@ bool utils::blitOrCopy(not_null<VRAM*> vram, CommandBuffer cb, ImageRef const& s
 	return canBlit(vram->m_device, imgs, filter) ? blit(vram, cb, src, out_dst, filter) : copy(vram, cb, src, out_dst);
 }
 
-Buffer utils::copySub(not_null<VRAM*> vram, CommandBuffer cb, Bitmap const& bitmap, Image const& out_dst, glm::ivec2 ioffset) {
+Memory::UniqueResource utils::copySub(not_null<VRAM*> vram, CommandBuffer cb, Bitmap const& bitmap, Image const& out_dst, glm::ivec2 ioffset) {
 	auto const extent = vk::Extent3D(bitmap.extent.x, bitmap.extent.y, 1U);
 	auto copyRegion = VRAM::bufferImageCopy(extent, vk::ImageAspectFlagBits::eColor, 0U, ioffset, 0U);
 	auto const layout = vram->m_device->m_layouts.get(out_dst.image());
@@ -443,7 +443,7 @@ Buffer utils::copySub(not_null<VRAM*> vram, CommandBuffer cb, Bitmap const& bitm
 	meta.access = {vAFB::eMemoryRead | vAFB::eMemoryWrite, vAFB::eMemoryRead | vAFB::eMemoryWrite};
 	VRAM::copy(cb.m_cb, buffer.buffer(), out_dst.image(), copyRegion, meta);
 	if (out_dst.mipCount() > 1U) { vram->makeMipMaps(cb, out_dst, meta.layouts); }
-	return buffer;
+	return std::move(buffer).resource();
 }
 
 std::optional<Image> utils::makeStorage(not_null<VRAM*> vram, ImageRef const& src) {

@@ -81,7 +81,7 @@ class Font::Pen {
   private:
 	FontAtlas& atlas() const;
 
-	InstantCommand m_cmd;
+	mutable InstantCommand m_cmd;
 	PenInfo m_info;
 	glm::vec3 m_head;
 	glm::vec3 m_begin;

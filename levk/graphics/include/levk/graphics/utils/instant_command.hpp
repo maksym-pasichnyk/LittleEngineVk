@@ -12,6 +12,8 @@ class InstantCommand {
 
 	CommandBuffer const& cb() const noexcept { return m_cb; }
 
+	Memory::Scratch m_scratch{};
+
   private:
 	not_null<CommandPool*> m_pool;
 	CommandBuffer m_cb;

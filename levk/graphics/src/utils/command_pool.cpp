@@ -57,10 +57,10 @@ CommandBuffer CommandPool::acquire() {
 	return ret;
 }
 
-vk::Result CommandPool::release(CommandBuffer&& cb, bool block) {
+vk::Result CommandPool::release(CommandBuffer&& cb, bool block, Memory::Scratch scratch) {
 	EXPECT(!std::any_of(m_cbs.begin(), m_cbs.end(), [c = cb.m_cb](Cmd const& cmd) { return cmd.cb == c; }));
 	cb.end();
-	Cmd cmd{cb.m_cb, m_fencePool.next()};
+	Cmd cmd{cb.m_cb, m_fencePool.next(), std::move(scratch)};
 	vk::SubmitInfo const si(0U, nullptr, {}, 1U, &cb.m_cb);
 	auto const ret = m_device->queues().submit(si, cmd.fence, m_qtype);
 	if (ret == vk::Result::eSuccess) {

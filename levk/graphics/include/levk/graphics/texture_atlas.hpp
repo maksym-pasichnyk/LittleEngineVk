@@ -5,15 +5,14 @@
 namespace le::graphics {
 class TextureAtlas {
   public:
-	enum class Outcome { eOk, eOverflowX, eSizeLocked, eResizeFail, eInvalidSize };
-	using Result = VRAM::Op<Outcome>;
+	enum class Result { eOk, eOverflowX, eSizeLocked, eResizeFail, eInvalidSize };
 
 	struct CreateInfo;
 	using ID = u32;
 
 	TextureAtlas(not_null<VRAM*> vram, CreateInfo const& info);
 
-	[[nodiscard]] Result add(ID id, Bitmap const& bitmap, CommandBuffer const& cb);
+	Result add(ID id, Bitmap const& bitmap, Memory::Scratch& out, CommandBuffer const& cb);
 	bool setUV(ID id, Span<Vertex> quad) const noexcept;
 	Texture const& texture() const noexcept { return m_texture; }
 
@@ -43,7 +42,7 @@ class TextureAtlas {
 	not_null<VRAM*> m_vram;
 
 	QuadUV getUV(Entry const& entry) const noexcept;
-	Outcome prepAtlas(Extent2D extent, CommandBuffer const& cb, Result& out);
+	Result prepAtlas(Memory::Scratch& out, CommandBuffer const& cb, Extent2D extent);
 	void nextRow() noexcept;
 };
 

@@ -1,7 +1,6 @@
 #pragma once
 #include <levk/core/bitmap.hpp>
 #include <levk/graphics/buffer.hpp>
-#include <levk/graphics/device/scratch.hpp>
 #include <levk/graphics/device/transfer.hpp>
 #include <levk/graphics/image.hpp>
 #include <levk/graphics/image_ref.hpp>
@@ -23,14 +22,6 @@ class VRAM final : public Memory {
 	using Memory::copy;
 	using Images = ktl::fixed_vector<utils::STBImg, 6>;
 	using CreateInfo = Transfer::CreateInfo;
-
-	template <typename T = bool>
-	struct Op {
-		Scratch scratch;
-		T outcome;
-
-		Op(T outcome = T{}) noexcept : outcome(outcome) {}
-	};
 
 	static constexpr AspectPair colour_aspects_v = {vIAFB::eColor, vIAFB::eColor};
 

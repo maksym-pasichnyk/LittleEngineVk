@@ -1,5 +1,6 @@
 #pragma once
 #include <levk/graphics/command_buffer.hpp>
+#include <levk/graphics/memory.hpp>
 
 namespace le::graphics {
 class FencePool {
@@ -23,12 +24,13 @@ class CommandPool {
 	CommandPool(not_null<Device*> device, QType qtype = QType::eGraphics, std::size_t batch = 4);
 
 	CommandBuffer acquire();
-	vk::Result release(CommandBuffer&& cmd, bool block);
+	vk::Result release(CommandBuffer&& cmd, bool block, Memory::Scratch scratch = {});
 
   private:
 	struct Cmd {
-		vk::CommandBuffer cb;
-		vk::Fence fence;
+		vk::CommandBuffer cb{};
+		vk::Fence fence{};
+		Memory::Scratch scratch{};
 	};
 
 	FencePool m_fencePool;

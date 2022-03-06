@@ -26,8 +26,6 @@ class Texture {
 	enum class Type { e2D, eCube };
 	enum class Payload { eColour, eData };
 
-	using Result = VRAM::Op<>;
-
 	static constexpr vk::ImageUsageFlags usage_v = vIUFB::eSampled | vIUFB::eTransferSrc | vIUFB::eTransferDst;
 
 	static constexpr Extent2D default_extent_v = {32U, 32U};
@@ -43,10 +41,10 @@ class Texture {
 
 	bool changeSampler(vk::Sampler sampler);
 	bool assign(Image&& image, Type type = Type::e2D, Payload payload = Payload::eColour);
-	[[nodiscard]] Result resizeBlit(CommandBuffer cb, Extent2D extent);
-	[[nodiscard]] Result resizeCopy(CommandBuffer cb, Extent2D extent);
+	bool resizeBlit(Memory::Scratch& out, CommandBuffer cb, Extent2D extent);
+	bool resizeCopy(Memory::Scratch& out, CommandBuffer cb, Extent2D extent);
 	bool blit(CommandBuffer cb, ImageRef const& src, BlitFilter filter = BlitFilter::eLinear);
-	[[nodiscard]] Result copy(CommandBuffer cb, ImageRef const& src, bool allowResize);
+	bool copy(Memory::Scratch& out, CommandBuffer cb, ImageRef const& src, bool allowResize);
 
 	bool busy() const { return m_transfer.busy(); }
 	bool ready() const { return m_transfer.ready(); }
@@ -60,7 +58,7 @@ class Texture {
   private:
 	bool constructImpl(Span<BmpView const> bmps, Extent2D extent, Payload payload, vk::Format format, bool mips);
 	bool constructImpl(VRAM::Images&& imgs, Payload payload, vk::Format format, bool mips);
-	Result resize(CommandBuffer cb, Extent2D extent, bool viaBlit);
+	bool resize(Memory::Scratch& out, CommandBuffer cb, Extent2D extent, bool viaBlit);
 
 	Image m_image;
 	VRAM::Future m_transfer;

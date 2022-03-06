@@ -30,23 +30,18 @@ Glyph FontAtlas::glyph(Codepoint cp) const noexcept {
 	return {};
 }
 
-FontAtlas::Result FontAtlas::build(CommandBuffer const& cb, Codepoint const cp, bool const rebuild) {
-	Result ret;
+FontAtlas::Result FontAtlas::build(Memory::Scratch& out, CommandBuffer const& cb, Codepoint const cp, bool const rebuild) {
 	if (!rebuild || cp == Codepoint{}) {
-		if (m_glyphs.contains(cp)) {
-			ret.outcome = Outcome::eOk;
-			return ret;
-		}
+		if (m_glyphs.contains(cp)) { return Result::eOk; }
 	}
 	auto slot = m_face.slot(cp);
 	if (slot.codepoint == cp) {
 		auto glyph = toGlyph(slot);
 		if (glyph.textured) {
-			if (auto res = m_atlas.add(cp, slot.pixmap, cb); res.outcome == Outcome::eOk) {
+			if (auto res = m_atlas.add(cp, slot.pixmap, out, cb); res == Result::eOk) {
 				glyph.quad = m_atlas.get(cp);
-				ret = std::move(res);
 			} else {
-				if (res.outcome == Outcome::eSizeLocked) {
+				if (res == Result::eSizeLocked) {
 					logW(LC_LibUser, "[Graphics] FontAtlas size locked; cannot build new glyph [{} ({})]", static_cast<unsigned char>(cp), cp.value);
 					return res;
 				}
@@ -54,11 +49,10 @@ FontAtlas::Result FontAtlas::build(CommandBuffer const& cb, Codepoint const cp, 
 				glyph.quad = m_atlas.get({});
 				slot = m_face.slot({});
 				slot.codepoint = cp;
-				ret = std::move(res);
 			}
 		}
 		m_glyphs.insert_or_assign(cp, glyph);
 	}
-	return ret;
+	return Result::eOk;
 }
 } // namespace le::graphics

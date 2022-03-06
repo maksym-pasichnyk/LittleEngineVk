@@ -8,7 +8,7 @@ InstantCommand::InstantCommand(not_null<CommandPool*> pool, bool block) : m_pool
 InstantCommand::InstantCommand(not_null<VRAM*> vram, bool block) : m_pool(&vram->commandPool()), m_cb(m_pool->acquire()), m_block(block) {}
 
 InstantCommand::~InstantCommand() {
-	auto const res = m_pool->release(std::move(m_cb), m_block);
+	auto const res = m_pool->release(std::move(m_cb), m_block, std::move(m_scratch));
 	EXPECT(res == vk::Result::eSuccess);
 	if (res != vk::Result::eSuccess) { logW(LC_LibUser, "[Graphics] Command submission failure!"); }
 }

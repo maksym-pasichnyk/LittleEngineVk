@@ -26,6 +26,7 @@ class Memory : public Pinned {
 	struct Resource;
 	struct Deleter;
 	using UniqueResource = Device::Unique<Resource, Deleter>;
+	using Scratch = std::vector<UniqueResource>;
 
 	struct ImgMeta {
 		LayerMip layerMip;

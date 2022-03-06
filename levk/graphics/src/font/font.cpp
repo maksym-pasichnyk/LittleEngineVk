@@ -100,8 +100,7 @@ bool Font::load(FontAtlas& out, Height height) {
 		return false;
 	}
 	auto inst = InstantCommand(&m_vram->commandPool());
-	std::vector<TextureAtlas::Result> staging;
-	for (Codepoint cp = m_info.preload.first; cp.value < m_info.preload.second.value; ++cp.value) { staging.push_back(out.build(inst.cb(), cp)); }
+	for (Codepoint cp = m_info.preload.first; cp.value < m_info.preload.second.value; ++cp.value) { out.build(inst.m_scratch, inst.cb(), cp); }
 	return true;
 }
 
@@ -113,7 +112,7 @@ Font::Pen::Pen(not_null<Font*> font, PenInfo const& info)
 
 Glyph Font::Pen::glyph(Codepoint cp) const {
 	auto& at = atlas();
-	if (!at.contains(cp) && at.build(m_cmd.cb(), cp).outcome != TextureAtlas::Outcome::eOk) { cp = {}; }
+	if (!at.contains(cp) && at.build(m_cmd.m_scratch, m_cmd.cb(), cp) != TextureAtlas::Result::eOk) { cp = {}; }
 	return at.glyph(cp);
 }
 

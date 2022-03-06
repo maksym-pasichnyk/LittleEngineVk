@@ -119,17 +119,17 @@ bool Texture::assign(Image&& image, Type type, Payload payload) {
 	return false;
 }
 
-Texture::Result Texture::resizeBlit(CommandBuffer cb, Extent2D extent) {
+bool Texture::resizeBlit(Memory::Scratch& out, CommandBuffer cb, Extent2D extent) {
 	if (extent == m_image.extent2D()) { return true; }
 	EXPECT(extent.x > 0 && extent.y > 0);
-	if (extent.x > 0 && extent.y > 0) { return resize(cb, extent, true); }
+	if (extent.x > 0 && extent.y > 0) { return resize(out, cb, extent, true); }
 	return false;
 }
 
-Texture::Result Texture::resizeCopy(CommandBuffer cb, Extent2D extent) {
+bool Texture::resizeCopy(Memory::Scratch& out, CommandBuffer cb, Extent2D extent) {
 	if (extent == m_image.extent2D()) { return true; }
 	EXPECT(extent.x > 0 && extent.y > 0);
-	if (extent.x > 0 && extent.y > 0) { return resize(cb, extent, false); }
+	if (extent.x > 0 && extent.y > 0) { return resize(out, cb, extent, false); }
 	return false;
 }
 
@@ -138,16 +138,14 @@ bool Texture::blit(CommandBuffer cb, ImageRef const& src, BlitFilter filter) {
 	return utils::blit(m_vram, cb, src, m_image, filter);
 }
 
-Texture::Result Texture::copy(CommandBuffer cb, ImageRef const& src, bool allowResize) {
+bool Texture::copy(Memory::Scratch& out, CommandBuffer cb, ImageRef const& src, bool allowResize) {
 	wait();
-	Result ret;
 	if (m_image.extent2D() != src.extent) {
-		if (!allowResize || src.extent.x == 0 || src.extent.y == 0) { return {}; }
-		ret.scratch.image = std::move(m_image);
+		if (!allowResize || src.extent.x == 0 || src.extent.y == 0) { return false; }
+		out.push_back(std::move(m_image).resource());
 		m_image = Image(m_vram, Image::textureInfo(src.extent, m_image.format(), m_image.mipCount() > 1U));
 	}
-	ret.outcome = utils::copy(m_vram, cb, src, m_image);
-	return ret;
+	return utils::copy(m_vram, cb, src, m_image);
 }
 
 bool Texture::constructImpl(Span<BmpView const> imgs, Extent2D extent, Payload payload, vk::Format format, bool mips) {
@@ -174,25 +172,25 @@ bool Texture::constructImpl(VRAM::Images&& imgs, Payload payload, vk::Format for
 	return true;
 }
 
-Texture::Result Texture::resize(CommandBuffer cb, Extent2D extent, bool viaBlit) {
+bool Texture::resize(Memory::Scratch& out, CommandBuffer cb, Extent2D extent, bool viaBlit) {
 	Image image(m_vram, Image::textureInfo(extent, m_image.format(), m_image.mipCount() > 1U));
 	utils::Transition tr{m_vram->m_device, &cb, image.image()};
 	tr(vk::ImageLayout::eTransferDstOptimal, image.layerMip());
 	m_vram->clear(cb.m_cb, image.ref(), image.layerMip(), vk::ImageLayout::eTransferDstOptimal, {});
 	wait();
-	Result ret;
+	bool ret{};
 	if (viaBlit) {
-		ret.outcome = utils::blit(m_vram, cb, m_image.ref(), image, BlitFilter::eLinear);
+		ret = utils::blit(m_vram, cb, m_image.ref(), image, BlitFilter::eLinear);
 	} else {
-		ret.outcome = utils::copy(m_vram, cb, m_image.ref(), image);
+		ret = utils::copy(m_vram, cb, m_image.ref(), image);
 	}
-	if (ret.outcome) {
+	if (ret) {
 		LayerMip lm;
 		lm.layer.count = image.layerCount();
 		lm.mip.count = image.mipCount();
 		utils::Transition{m_vram->m_device, &cb, image.image()}(vIL::eShaderReadOnlyOptimal, lm);
 		std::swap(m_image, image);
-		ret.scratch.image = std::move(image);
+		out.push_back(std::move(image).resource());
 	}
 	return ret;
 }
