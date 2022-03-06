@@ -73,7 +73,7 @@ struct GPU : clap::option_parser {
 		case no_arg: {
 			if (state.arg_index() == 0) {
 				// override gpu
-				s64 const i = utils::toS64(arg, -1);
+				s64 const i = utils::to<s64>(arg, -1);
 				if (i < 0) { return false; }
 				auto const idx = std::size_t(i);
 				try {

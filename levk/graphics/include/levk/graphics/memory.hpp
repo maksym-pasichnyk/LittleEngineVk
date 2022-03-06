@@ -25,6 +25,7 @@ class Memory : public Pinned {
 	struct AllocInfo;
 	struct Resource;
 	struct Deleter;
+	using UniqueResource = Device::Unique<Resource, Deleter>;
 
 	struct ImgMeta {
 		LayerMip layerMip;
@@ -79,7 +80,8 @@ struct Memory::Resource {
 	void* data{};
 	QCaps qcaps;
 
-	bool operator==(Resource const& rhs) const noexcept { return handle == rhs.handle; }
+	explicit operator bool() const noexcept { return allocator && handle; }
+	bool operator==(Resource const& rhs) const noexcept { return allocator == rhs.allocator && handle == rhs.handle; }
 };
 
 struct Memory::Deleter {

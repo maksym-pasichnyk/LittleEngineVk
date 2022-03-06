@@ -70,7 +70,7 @@ Pipeline PipelineFactory::get(Spec const& spec, vk::RenderPass renderPass) {
 		sit->second.spec = spec;
 	}
 	auto& specMap = sit->second;
-	if (!specMap.meta.layout.active()) { specMap.meta = makeMeta(spec.shader); }
+	if (!specMap.meta.layout) { specMap.meta = makeMeta(spec.shader); }
 	auto pit = specMap.map.find(renderPass);
 	if (pit == specMap.map.end() || pit->second.stale) {
 		auto pipe = makePipe(specMap, renderPass);
@@ -117,10 +117,10 @@ void PipelineFactory::clear(Hash spec) noexcept {
 
 std::optional<PipelineFactory::Pipe> PipelineFactory::makePipe(SpecMap const& spec, vk::RenderPass renderPass) const {
 	Pipe ret;
-	ret.layout = spec.meta.layout;
+	ret.layout = *spec.meta.layout;
 	utils::PipeData data;
 	data.renderPass = renderPass;
-	data.layout = spec.meta.layout;
+	data.layout = *spec.meta.layout;
 	ktl::fixed_vector<vk::UniqueShaderModule, 4> modules;
 	ktl::fixed_vector<utils::ShaderModule, 4> sm;
 	for (auto const uri : spec.spec.shader.moduleURIs) {

@@ -23,6 +23,8 @@ class Buffer {
 	template <typename T>
 	bool writeT(T const& t, vk::DeviceSize offset = 0);
 
+	Memory::UniqueResource resource() &&;
+
   private:
 	struct Data {
 		std::size_t writeCount = 0;

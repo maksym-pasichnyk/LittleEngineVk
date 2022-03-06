@@ -14,7 +14,7 @@ class Sampler {
 	Sampler(not_null<Device*> device, vk::SamplerCreateInfo info);
 	Sampler(not_null<Device*> device, MinMag minMag, vk::SamplerMipmapMode mip = vk::SamplerMipmapMode::eLinear);
 
-	vk::Sampler sampler() const noexcept { return m_sampler; }
+	vk::Sampler sampler() const noexcept { return *m_sampler; }
 
   private:
 	Defer<vk::Sampler> m_sampler;

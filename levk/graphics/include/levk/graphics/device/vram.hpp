@@ -1,6 +1,7 @@
 #pragma once
 #include <levk/core/bitmap.hpp>
 #include <levk/graphics/buffer.hpp>
+#include <levk/graphics/device/scratch.hpp>
 #include <levk/graphics/device/transfer.hpp>
 #include <levk/graphics/image.hpp>
 #include <levk/graphics/image_ref.hpp>
@@ -22,11 +23,6 @@ class VRAM final : public Memory {
 	using Memory::copy;
 	using Images = ktl::fixed_vector<utils::STBImg, 6>;
 	using CreateInfo = Transfer::CreateInfo;
-
-	struct Scratch {
-		std::optional<Buffer> buffer;
-		std::optional<Image> image;
-	};
 
 	template <typename T = bool>
 	struct Op {

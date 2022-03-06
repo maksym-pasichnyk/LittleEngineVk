@@ -20,7 +20,7 @@ class Image {
 	ImageRef ref() const noexcept;
 	LayerMip layerMip() const noexcept;
 	vk::Image image() const noexcept { return m_image.get().resource.get<vk::Image>(); }
-	vk::ImageView view() const noexcept { return m_view; }
+	vk::ImageView view() const noexcept { return *m_view; }
 	vk::ImageViewType viewType() const noexcept { return m_data.viewType; }
 	vk::Format format() const noexcept { return m_data.format; }
 	u32 layerCount() const noexcept { return m_data.layerCount; }
@@ -33,6 +33,8 @@ class Image {
 	void const* mapped() const noexcept { return m_image.get().data; }
 	void const* map();
 	bool unmap();
+
+	Memory::UniqueResource resource() &&;
 
   private:
 	struct Data {

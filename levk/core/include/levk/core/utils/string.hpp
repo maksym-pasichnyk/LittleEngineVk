@@ -1,6 +1,7 @@
 #pragma once
 #include <ktl/fixed_vector.hpp>
 #include <levk/core/std_types.hpp>
+#include <charconv>
 #include <sstream>
 #include <string_view>
 #include <type_traits>
@@ -28,20 +29,19 @@ std::string_view tName(T const* t = nullptr);
 ///
 std::string_view removeNamespaces(std::string_view name) noexcept;
 
+struct FromChars {
+	template <typename T>
+	bool operator()(std::string_view const str, T& out) const noexcept;
+};
 ///
 /// \brief Convert input to a numeric / boolean type
 ///
 template <typename T>
-T to(std::string_view input, T fallback = {}) noexcept;
+T to(std::string_view input, T const& fallback = {}) noexcept;
 ///
 /// \brief Convert raw bytes to string (ASCII only)
 ///
-std::string toText(bytearray buffer);
-
-bool toBool(std::string_view input, bool fallback) noexcept;
-s64 toS64(std::string_view input, s64 fallback) noexcept;
-u64 toU64(std::string_view input, u64 fallback) noexcept;
-f64 toF64(std::string_view input, f64 fallback) noexcept;
+std::string toText(bytearray const& buffer);
 
 std::string toString(std::istream const& in);
 
@@ -76,20 +76,10 @@ std::string_view tName(T const* t) {
 }
 
 template <typename T>
-T to(std::string_view input, T fallback) noexcept {
-	if constexpr (std::is_integral_v<T>) {
-		if constexpr (std::is_unsigned_v<T>) {
-			return static_cast<T>(toU64(input, static_cast<u64>(fallback)));
-		} else {
-			return static_cast<T>(toS64(input, static_cast<s64>(fallback)));
-		}
-	} else if constexpr (std::is_floating_point_v<T>) {
-		return static_cast<T>(toF64(input, static_cast<f64>(fallback)));
-	} else if constexpr (std::is_same_v<T, bool>) {
-		return toBool(input, fallback);
-	} else {
-		static_assert(false_v<T>, "Invalid type!");
-	}
+T to(std::string_view const str, T const& fallback) noexcept {
+	T ret;
+	if (FromChars{}(str, ret)) { return ret; }
+	return fallback;
 }
 
 template <std::size_t N>
@@ -119,4 +109,13 @@ std::string concatenate(Cont&& strings, Delim const& delim) {
 	}
 	return ret.str();
 }
+
+template <typename T>
+bool FromChars::operator()(std::string_view const str, T& out) const noexcept {
+	auto [_, ec] = std::from_chars(str.data(), str.data() + str.size(), out);
+	return ec == std::errc();
+}
+
+template <>
+bool FromChars::operator()<bool>(std::string_view const str, bool& out) const noexcept;
 } // namespace le::utils

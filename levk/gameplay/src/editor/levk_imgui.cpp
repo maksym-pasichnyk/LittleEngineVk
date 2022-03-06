@@ -163,7 +163,7 @@ void DearImGui::Del::operator()(Device&) const {
 
 bool DearImGui::beginFrame() {
 #if defined(LEVK_USE_IMGUI)
-	if (m_del.active()) {
+	if (m_del) {
 		if (m_state == State::eBegin) { ImGui::EndFrame(); }
 		next(m_state, State::eBegin);
 		ImGui_ImplVulkan_NewFrame();
@@ -180,7 +180,7 @@ bool DearImGui::beginFrame() {
 
 bool DearImGui::endFrame() {
 #if defined(LEVK_USE_IMGUI)
-	if (m_del.active() && next(State::eBegin, State::eRender)) {
+	if (m_del && next(State::eBegin, State::eRender)) {
 		ImGui::Render();
 		return true;
 	}
@@ -190,7 +190,7 @@ bool DearImGui::endFrame() {
 
 bool DearImGui::renderDrawData([[maybe_unused]] graphics::CommandBuffer const& cb) {
 #if defined(LEVK_USE_IMGUI)
-	if (m_del.active() && next(State::eRender, State::eEnd)) {
+	if (m_del && next(State::eRender, State::eEnd)) {
 		if (auto const pData = ImGui::GetDrawData()) {
 			ImGui_ImplVulkan_RenderDrawData(pData, cb.m_cb);
 			return true;

@@ -57,4 +57,10 @@ bool Buffer::write(void const* data, vk::DeviceSize size, vk::DeviceSize offset)
 	}
 	return false;
 }
+
+Memory::UniqueResource Buffer::resource() && {
+	auto ret = Memory::UniqueResource(std::exchange(m_buffer.get(), {}), m_memory->m_device);
+	m_data = {};
+	return ret;
+}
 } // namespace le::graphics

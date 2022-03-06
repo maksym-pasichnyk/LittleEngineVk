@@ -108,7 +108,7 @@ void DescriptorPool::makeSets() const {
 	m_pools.push_back(Defer<vk::DescriptorPool>(pool, m_vram->m_device));
 	std::vector<vk::DescriptorSetLayout> layouts(m_info.setsPerPool * std::size_t(m_info.buffering), m_info.layout);
 	auto const count = m_info.setsPerPool * u32(m_info.buffering);
-	auto sets = m_vram->m_device->allocateDescriptorSets(m_pools.back(), layouts, count);
+	auto sets = m_vram->m_device->allocateDescriptorSets(*m_pools.back(), layouts, count);
 	while (!sets.empty()) {
 		EXPECT(sets.size() % count == 0U);
 		auto const span = Span(sets.data() + sets.size() - count, count);

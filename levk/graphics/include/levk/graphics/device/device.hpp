@@ -22,6 +22,9 @@ class Device final : public Pinned {
 	template <typename T>
 	struct Deleter;
 
+	template <typename T, typename Del = Deleter<T>>
+	class Unique;
+
 	enum class QSelect { eOptimal, eSingleFamily, eSingleQueue };
 	static constexpr std::string_view requiredExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME};
 	static constexpr stdch::nanoseconds fenceWait = 5s;
@@ -128,7 +131,53 @@ struct Device::CreateInfo {
 
 template <typename T>
 struct Device::Deleter {
-	void operator()(vk::Device device, T t) const { device.destroy(t); }
+	void operator()(Device& device, T t) const { device.destroy(t); }
+};
+
+template <typename T, typename Del>
+class Device::Unique {
+  public:
+	Unique() = default;
+	Unique(T t, not_null<Device*> device) noexcept : m_t(std::move(t)), m_device(device) {}
+	Unique(Unique&& rhs) noexcept : Unique() { exchg(*this, rhs); }
+	Unique& operator=(Unique&& rhs) noexcept { return (exchg(*this, rhs), *this); }
+	~Unique() {
+		if (m_device && m_t != T{}) { Del{}(*m_device, m_t); }
+	}
+
+	explicit operator bool() const noexcept { return m_device != nullptr && m_t != T{}; }
+	T const& operator*() const noexcept { return get(); }
+	T const* operator->() const noexcept { return &get(); }
+
+	T const& get() const noexcept { return m_t; }
+	T& get() noexcept { return m_t; }
+
+  private:
+	static void exchg(Unique& lhs, Unique& rhs) noexcept {
+		std::swap(lhs.m_t, rhs.m_t);
+		std::swap(lhs.m_device, rhs.m_device);
+	}
+
+	T m_t;
+	Opt<Device> m_device{};
+};
+
+template <typename Del>
+class Device::Unique<void, Del> {
+  public:
+	Unique(Opt<Device> device = {}) noexcept : m_device(device) {}
+	Unique(Unique&& rhs) noexcept : Unique() { exchg(*this, rhs); }
+	Unique& operator=(Unique&& rhs) noexcept { return (exchg(*this, rhs), *this); }
+	~Unique() {
+		if (m_device) { Del{}(*m_device); }
+	}
+
+	explicit operator bool() const noexcept { return m_device != nullptr; }
+
+  private:
+	static void exchg(Unique& lhs, Unique& rhs) noexcept { std::swap(lhs.m_device, rhs.m_device); }
+
+	Opt<Device> m_device{};
 };
 
 constexpr vk::BufferUsageFlagBits Device::bufferUsage(vk::DescriptorType type) noexcept {

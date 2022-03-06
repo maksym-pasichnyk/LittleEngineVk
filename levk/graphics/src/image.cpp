@@ -62,7 +62,7 @@ u32 Image::mipLevels(Extent2D extent) noexcept { return static_cast<u32>(std::fl
 
 ImageRef Image::ref() const noexcept {
 	bool const linear = m_data.tiling == vk::ImageTiling::eLinear;
-	return ImageRef{ImageView{image(), m_view, extent2D(), m_data.format}, linear};
+	return ImageRef{ImageView{image(), *m_view, extent2D(), m_data.format}, linear};
 }
 
 LayerMip Image::layerMip() const noexcept {
@@ -116,5 +116,12 @@ bool Image::unmap() {
 		return true;
 	}
 	return false;
+}
+
+Memory::UniqueResource Image::resource() && {
+	auto ret = Memory::UniqueResource(std::exchange(m_image.get(), {}), m_memory->m_device);
+	m_view = {};
+	m_data = {};
+	return ret;
 }
 } // namespace le::graphics

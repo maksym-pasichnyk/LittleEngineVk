@@ -64,7 +64,7 @@ class PipelineFactory {
 		mutable ShaderInput input;
 		bool stale{};
 
-		Pipeline pipe() const noexcept { return {&input, pipeline, layout}; }
+		Pipeline pipe() const noexcept { return {&input, *pipeline, layout}; }
 	};
 	struct Meta {
 		ShaderInput::PoolData spd;

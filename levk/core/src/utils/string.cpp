@@ -91,52 +91,23 @@ std::string_view utils::removeNamespaces(std::string_view name) noexcept {
 	return name;
 }
 
-bool utils::toBool(std::string_view input, bool fallback) noexcept {
-	if (!input.empty()) {
-		if (input == "true" || input == "True" || input == "1") { return true; }
-		if (input == "false" || input == "False" || input == "0") { return false; }
+template <>
+bool utils::FromChars::operator()<bool>(std::string_view const str, bool& out) const noexcept {
+	if (str == "true" || str == "TRUE" || str == "True") {
+		out = true;
+		return true;
+	} else if (str == "false" || str == "FALSE" || str == "False") {
+		out = false;
+		return true;
 	}
-	return fallback;
+	return false;
 }
 
-s64 utils::toS64(std::string_view input, s64 fallback) noexcept {
-	s64 ret = fallback;
-	if (!input.empty()) {
-		try {
-			ret = static_cast<s64>(std::atoll(input.data()));
-		} catch (std::invalid_argument const&) { ret = fallback; }
-	}
+std::string utils::toText(bytearray const& buffer) {
+	std::string ret;
+	ret.reserve(buffer.size());
+	for (std::size_t i = 0; i < buffer.size(); ++i) { ret.push_back(static_cast<char>(buffer[i])); }
 	return ret;
-}
-
-u64 utils::toU64(std::string_view input, u64 fallback) noexcept {
-	u64 ret = fallback;
-	if (!input.empty()) {
-		try {
-			ret = static_cast<u64>(std::stoull(input.data()));
-		} catch (std::invalid_argument const&) { ret = fallback; }
-		if (errno == ERANGE) {
-			errno = 0;
-			ret = fallback;
-		}
-	}
-	return ret;
-}
-
-f64 utils::toF64(std::string_view input, f64 fallback) noexcept {
-	f64 ret = fallback;
-	if (!input.empty()) {
-		try {
-			ret = static_cast<f64>(std::stod(input.data()));
-		} catch (std::invalid_argument const&) { ret = fallback; }
-	}
-	return ret;
-}
-
-std::string utils::toText(bytearray buffer) {
-	std::vector<char> chars(buffer.size() + 1, 0);
-	for (std::size_t i = 0; i < buffer.size(); ++i) { chars[i] = static_cast<char>(buffer[i]); }
-	return std::string(chars.data());
 }
 
 std::pair<std::string, std::string> utils::bisect(std::string_view input, char delimiter) {

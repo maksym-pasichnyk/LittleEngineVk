@@ -23,6 +23,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   include/levk/graphics/device/device.hpp
   include/levk/graphics/device/physical_device.hpp
   include/levk/graphics/device/queue.hpp
+  include/levk/graphics/device/scratch.hpp
   include/levk/graphics/device/transfer.hpp
   include/levk/graphics/device/vram.hpp
 

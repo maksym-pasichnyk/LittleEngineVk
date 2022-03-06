@@ -74,7 +74,7 @@ class Renderer {
 	bool renderScale(f32) noexcept;
 	bool canBlitFrame() const noexcept { return m_blitFlags.test(BlitFlag::eSrc); }
 
-	vk::RenderPass mainRenderPass() const noexcept { return m_singleRenderPass; }
+	vk::RenderPass mainRenderPass() const noexcept { return *m_singleRenderPass; }
 	Image const* offScreenImage() const noexcept { return m_colourImage.peek(); }
 
   protected:

@@ -55,7 +55,7 @@ Renderer::Cmd Renderer::Cmd::make(not_null<Device*> device, bool secondary) {
 	Cmd ret;
 	auto const level = secondary ? vk::CommandBufferLevel::eSecondary : vk::CommandBufferLevel::ePrimary;
 	ret.pool = {device->queues().graphics().makeCommandPool(device->device(), vk::CommandPoolCreateFlagBits::eTransient), device};
-	ret.cb = CommandBuffer(*device, ret.pool, level);
+	ret.cb = CommandBuffer(*device, *ret.pool, level);
 	return ret;
 }
 
@@ -164,7 +164,7 @@ RenderInfo Renderer::mainPassInfo(RenderTarget const& colour, RenderTarget const
 	ri.begin = rb;
 	ri.primary = m_primaryCmd.get().cb;
 	for (auto const& cmd : m_secondaryCmds.get()) { ri.secondary.push_back(cmd.cb); }
-	ri.renderPass = m_singleRenderPass;
+	ri.renderPass = *m_singleRenderPass;
 	ri.framebuffer.colour = colour;
 	ri.framebuffer.depth = depth;
 	ri.out_framebuffer = &m_framebuffers.get().get();
@@ -183,8 +183,8 @@ RenderPass Renderer::beginMainPass(PipelineFactory& pf, RenderTarget const& acqu
 	auto& depthImage = m_depthImage.refresh(extent, m_surfaceFormat.depth);
 	auto const depth = RenderTarget{depthImage.ref()};
 	auto& cmd = m_primaryCmd.get();
-	m_vram->m_device->resetCommandPool(cmd.pool);
-	for (auto& cmd : m_secondaryCmds.get()) { m_vram->m_device->resetCommandPool(cmd.pool); }
+	m_vram->m_device->resetCommandPool(*cmd.pool);
+	for (auto& cmd : m_secondaryCmds.get()) { m_vram->m_device->resetCommandPool(*cmd.pool); }
 	cmd.cb.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	return RenderPass(m_vram->m_device, &pf, mainPassInfo(colour, depth, rb));
 }

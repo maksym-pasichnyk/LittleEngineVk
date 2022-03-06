@@ -101,9 +101,9 @@ void RenderContext::setRenderer(std::unique_ptr<Renderer>&& renderer) noexcept {
 std::optional<RenderPass> RenderContext::beginMainPass(RenderBegin const& rb, Extent2D fbSize) {
 	if (fbSize.x == 0 || fbSize.y == 0) { return std::nullopt; }
 	auto& sync = m_syncs.get();
-	if (auto acquired = m_surface.acquireNextImage(fbSize, sync.draw)) {
+	if (auto acquired = m_surface.acquireNextImage(fbSize, *sync.draw)) {
 		m_acquired = *acquired;
-		m_vram->m_device->resetFence(sync.drawn, true);
+		m_vram->m_device->resetFence(*sync.drawn, true);
 		return m_renderer->beginMainPass(m_pipelineFactory, m_acquired->image, rb);
 	}
 	return std::nullopt;
@@ -128,8 +128,8 @@ bool RenderContext::recreateSwapchain(Extent2D fbSize, std::optional<VSync> vsyn
 bool RenderContext::submit(vk::CommandBuffer cb, Acquire const& acquired, Extent2D fbSize) {
 	if (fbSize.x == 0 || fbSize.y == 0) { return false; }
 	auto const& sync = m_syncs.get();
-	auto const submitted = m_surface.submit(cb, {sync.draw, sync.present, sync.drawn}) == vk::Result::eSuccess;
-	auto const presented = m_surface.present(fbSize, acquired, sync.present) == vk::Result::eSuccess;
+	auto const submitted = m_surface.submit(cb, {*sync.draw, *sync.present, *sync.drawn}) == vk::Result::eSuccess;
+	auto const presented = m_surface.present(fbSize, acquired, *sync.present) == vk::Result::eSuccess;
 	EXPECT(submitted);
 	if (!submitted) { logW(LC_LibUser, "[Graphics] Queue submit failure"); }
 	return submitted && presented;
